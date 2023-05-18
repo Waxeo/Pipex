@@ -12,6 +12,21 @@
 
 #include "../../include/pipex.h"
 
+void	*ft_memset(void *ptr, int value, size_t len)
+{
+	size_t	i;
+
+	i = 0;
+	if (!ptr)
+		return (NULL);
+	while (i < len)
+	{
+		*(unsigned char *)(ptr + i) = (unsigned char)value;
+		i++;
+	}
+	return (ptr);
+}
+
 static	void	ft_bzero(void *ptr, size_t n)
 {
 	size_t	i;

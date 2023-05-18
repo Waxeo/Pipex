@@ -23,9 +23,8 @@ WHITE		= \033[0;97m
 
 # Sources
 
-FILES	=	pipex/pipex pipex/files pipex/errors pipex/paths pipex/utils \
-			pipex/memory pipex/where_doc pipex/security libft/ft_split  \
-			libft/libfiles libft/libfiles2 libft/ft_strjoin 
+FILES	=	pipex/files pipex/pipex pipex/security pipex/utils pipex/where_doc\
+			libft/ft_split libft/libfiles libft/libfiles2 libft/ft_strjoin 
 
 SRCS	=	$(addprefix $(SRC_DIR), $(addsuffix .c, $(FILES)))
 OBJS	=	$(addprefix $(OBJ_DIR), $(addsuffix .o, $(FILES)))

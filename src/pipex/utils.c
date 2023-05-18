@@ -12,66 +12,81 @@
 
 #include "../../include/pipex.h"
 
-void	struct_init(t_data *data)
+void	struct_init(t_data *data, int ac, char **av, char **env)
 {
-	data->infile = -1;
-	data->outfile = -1;
-	data->index = 0;
-	data->paths = NULL;
-	data->cmd_paths = NULL;
-	data->cmd_options = NULL;
-	data->cmd = NULL;
-	data->n_cmd = 0;
-	data->pid = 0;
-	data->status = 0;
-	data->wait = 0;
-	data->here_doc = 0;
+	ft_memset(data, 0, sizeof(t_data));
+	data->nbcmd = ac - 3;
+	data->prev_pipe = -1;
+	data->infile = av[1];
+	data->outfile = av[ac -1];
+	data->env = env;
 }
 
-void	dup_n_close(t_data *data, int toggle)
+void	free_tab(char **tab)
 {
-	if (toggle == 0)
+	int	i;
+
+	i = 0;
+	while (tab[i])
 	{
-		safe_close(data->pipefd[1]);
-		safe_dup(data->pipefd[0], STDIN_FILENO);
-		safe_close(data->pipefd[0]);
+		free(tab[i]);
+		i++;
 	}
-	if (toggle == 1)
-	{
-		safe_close(data->pipefd[0]);
-		safe_dup(data->pipefd[1], STDOUT_FILENO);
-		safe_close(data->pipefd[1]);
-	}
+	free(tab);
 }
 
-void	waiting(int waitin)
-{
-	while (waitin--)
-		wait(NULL);
-}
-
-void	check_void_arg(char **av)
+int	check_cmd(char *av)
 {
 	int	i;
 
 	i = 0;
 	while (av[i])
 	{
-		if (av[i][0] == '\0')
+		if (av[i] != ' ')
+			return (1);
+		i++;
+	}
+	return (0);
+}
+
+char	**get_cmd_path(t_data *data)
+{
+	int	i;
+
+	i = 0;
+	while (data->env && data->env[i])
+	{
+		if (!strncmp(data->env[i], "PATH=", 5))
 		{
-			printf("Arg %d : syntax error\n", (i + 1));
-			exit (2);
+			return (ft_split(data->env[i] + 5, ':'));
 		}
 		i++;
 	}
+	return (NULL);
 }
 
-void	ft_parse(int ac, char **av)
+char	*cmd_final_state(t_data *data, char *cmd)
 {
-	(void)av;
-	if (ac < 5)
+	char	*new;
+	char	*tmp;
+	int		i;
+
+	i = 0;
+	if (ft_strchr(cmd, '/'))
 	{
-		wrong_args();
-		exit(1);
+		if (access(cmd, F_OK | X_OK) != -1)
+			return (cmd);
 	}
+	data->path = get_cmd_path(data);
+	while (data->path[i])
+	{
+		tmp = ft_strjoin(data->path[i], "/");
+		new = ft_strjoin(tmp, cmd);
+		free(tmp);
+		if (access(new, F_OK | X_OK) != -1)
+			return (new);
+		free(new);
+		i++;
+	}
+	return (NULL);
 }

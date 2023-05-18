@@ -6,13 +6,13 @@
 /*   By: mgauvrit <mgauvrit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/27 14:56:38 by mgauvrit          #+#    #+#             */
-/*   Updated: 2023/04/29 15:52:40 by mgauvrit         ###   ########.fr       */
+/*   Updated: 2023/05/11 15:15:27 by mgauvrit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex.h"
+#include "../../include/pipex.h"
 
-char	*ft_gnljoin(char *s1, char *s2)
+static	char	*ft_gnljoin(char *s1, char *s2)
 {
 	char	*s;
 	int		i;
@@ -40,7 +40,7 @@ char	*ft_gnljoin(char *s1, char *s2)
 	return (s);
 }
 
-char	*ft_line_return(char *stock)
+static	char	*ft_line_return(char *stock)
 {
 	int		i;
 	char	*s;
@@ -68,7 +68,7 @@ char	*ft_line_return(char *stock)
 	return (s);
 }
 
-char	*ft_stock(char *stock)
+static	char	*ft_stock(char *stock)
 {
 	unsigned int	i;
 	unsigned int	j;
@@ -95,7 +95,7 @@ char	*ft_stock(char *stock)
 	return (s);
 }
 
-char	*ft_read_and_save(int fd, char *stock)
+static	char	*ft_read_and_save(int fd, char *stock)
 {
 	char	*buf;
 	int		read_bytes;

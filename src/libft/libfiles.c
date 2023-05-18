@@ -12,23 +12,17 @@
 
 #include "../../include/pipex.h"
 
-char	*ft_strchr(const char *s, int c)
+int	ft_strchr(char *cmd, char c)
 {
 	int	i;
 
 	i = 0;
-	if (check_cmd((char *)s))
+	while (cmd[i])
 	{
-		if (c == 0)
-			return ((char *)(s + ft_strlen(s)));
-		while (s[i])
-		{
-			if (s[i] == (char)c)
-				return ((char *)(s + i));
-			i++;
-		}
+		if (cmd[i++] == c)
+			return (1);
 	}
-	return (NULL);
+	return (0);
 }
 
 size_t	ft_strlcpy(char *dest, const char *src, size_t size)

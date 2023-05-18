@@ -6,11 +6,11 @@
 /*   By: mgauvrit <mgauvrit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/11/14 14:56:01 by mgauvrit          #+#    #+#             */
-/*   Updated: 2023/04/14 16:48:01 by mgauvrit         ###   ########.fr       */
+/*   Updated: 2023/05/10 15:58:37 by mgauvrit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex.h"
+#include "../../include/pipex.h"
 
 //count le nombre de string a creer
 static int	ft_count(const char *s, char c)

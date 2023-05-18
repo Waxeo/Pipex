@@ -6,11 +6,11 @@
 /*   By: mgauvrit <mgauvrit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/04/29 15:01:05 by mgauvrit          #+#    #+#             */
-/*   Updated: 2023/04/29 15:54:03 by mgauvrit         ###   ########.fr       */
+/*   Updated: 2023/05/15 15:43:37 by mgauvrit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pipex.h"
+#include "../../include/pipex.h"
 
 void	safe_piping(int *pipefd)
 {
@@ -21,11 +21,11 @@ void	safe_piping(int *pipefd)
 	}
 }
 
-void	safe_exe(char *cmd, char **options, char **env)
+void	safe_exe(t_data *data, char **env)
 {
-	if (execve(cmd, options, env) == -1)
+	if (execve(data->cmd, data->cmd_options, env) == -1)
 	{
-		perror("execve");
+		perror("exceve");
 		exit(errno);
 	}
 }

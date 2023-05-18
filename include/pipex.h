@@ -6,7 +6,7 @@
 /*   By: mgauvrit <mgauvrit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/01/12 13:41:09 by mgauvrit          #+#    #+#             */
-/*   Updated: 2023/04/29 15:32:06 by mgauvrit         ###   ########.fr       */
+/*   Updated: 2023/05/18 15:32:15 by mgauvrit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,82 +30,55 @@
 typedef struct s_data
 {
 	int		pipefd[2];
-	int		infile;
-	int		outfile;
-	int		index;
-	char	*paths;
-	char	**cmd_paths;
+	int		fdin;
+	int		fdout;
+	int		nbcmd;
+	int		prev_pipe;
+	int		*pid;
+	int		status;
+	int		here_doc;
+	char	*outfile;
+	char	*infile;
 	char	**cmd_options;
 	char	*cmd;
-	int		n_cmd;
-	int		n_pipes;
-	int		*pipes;
-	int		child_id;
-	pid_t	pid;
-	int		status;
-	int		wait;
-	int		here_doc;
-}	t_data;
+	char	**env;
+	char	**path;
+}			t_data;
 
-/*pipex.c*/
-void	execmd(t_data *data, char **argv, int toggle);
-void	first_n_mid_childs(t_data *data, char **argv);
-void	last_one(t_data *data, char **argv);
-void	launcher(t_data *data, char **argv);
-
-/*paths.c*/
-char	*get_cmd_path(char **env);
-int		check_cmd(char *av3);
-char	*cmd_final_slash(char *cmd);
-char	*cmd_final_state(char **path, char *cmd);
-
-/*errors.c*/
-void	kill_da_process(char *msg);
-void	wrong_args(void);
-void	minishell_perror_cmd(t_data *data, char *error, int i);
-void	minishell_perror_glo(char *error);
-void	file_error(t_data *data, char *msg);
-
-/*utils.c*/
-void	dup_n_close(t_data *data, int toggle);
-void	struct_init(t_data *data);
-void	waiting(int waitin);
-void	check_void_arg(char **av);
-void	ft_parse(int ac, char **av);
-
-/*files.c*/
+/*Pipex*/	
+	/*files.c*/
 void	open_in(t_data *data, char *infile);
 void	open_out(t_data *data, char *outfile);
-
-/*leaks.c*/
-void	free_all_splitz(t_data *data);
-void	free_child_split(t_data *data);
-void	free_parent_split(t_data *data);
-
-/*where_doc.c*/
-void	check_here_doc(t_data *data, char **args);
-void	limiter_child(t_data *data, char *limiter);
-
-/*security.c*/
+void	lim_open(t_data *data);
+void	close_all_sides(t_data *data);
+void	file_error(t_data *data, char *msg);	
+	/*security.c*/
 void	safe_piping(int *pipefd);
-void	safe_exe(char *cmd, char **options, char **env);
+void	safe_exe(t_data *data, char **env);
 void	safe_close(int fd);
 void	safe_dup(int oldfd, int newfd);
-
-/*libft*/
+	/*utils.c*/
+void	struct_init(t_data *data, int ac, char **av, char **env);
+void	free_tab(char **tab);
+int		check_cmd(char *av);
+char	**get_cmd_path(t_data *data);
+char	*cmd_final_state(t_data *data, char *cmd);
+	/*where_doc.c*/
+void	limiter_child(t_data *data, char *limiter);
+/*Libft*/
+	/*ft_split.c*/
 char	**ft_split(const char *s, char c);
-char	*ft_strjoin(char *s1, char *s2);
-char	*ft_strchr(const char *s, int c);
-size_t	ft_strlen(const char *str);
-void	ft_putstr_fd(char *s, int fd);
-void	ft_putendl_fd(char *s, int fd);
-int		ft_strncmp(const char *s1, const char *s2, size_t len);
-size_t	ft_strlcpy(char *dest, const char *src, size_t size);
-char	*ft_strchr(const char *s, int c);
+	/*ft_strjoin.c*/
+void	*ft_memset(void *ptr, int value, size_t len);
 void	*ft_calloc(size_t nbr, size_t size);
+size_t	ft_strlen(const char *str);
+char	*ft_strjoin(char *s1, char *s2);
+	/*libfiles.c*/
+int		ft_strchr(char *cmd, char c);
+size_t	ft_strlcpy(char *dest, const char *src, size_t size);
+int		ft_strncmp(const char *s1, const char *s2, size_t len);
+void	ft_putendl_fd(char *s, int fd);
+void	ft_putstr_fd(char *s, int fd);
+	/*libfiles2.c*/
 char	*get_next_line(int fd);
-char	*ft_read_and_save(int fd, char *stock);
-char	*ft_stock(char *stock);
-char	*ft_line_return(char *stock);
-char	*ft_gnljoin(char *s1, char *s2);
 #endif

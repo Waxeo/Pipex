@@ -5,111 +5,127 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: mgauvrit <mgauvrit@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2023/01/12 13:41:49 by mgauvrit          #+#    #+#             */
-/*   Updated: 2023/04/29 15:55:18 by mgauvrit         ###   ########.fr       */
+/*   Created: 2023/05/11 14:50:45 by mgauvrit          #+#    #+#             */
+/*   Updated: 2023/05/18 15:55:40 by mgauvrit         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/pipex.h"
 
-// Il faudra lire sur le pipefd[0] et écrire sur le pipefd[1].
-// 0 = entre standard
-// 1 = sortie standard
+// ./pipex Makefile <cat || <ls grep "wc -l"  >|| lsblk> outfile
 
-void	execmd(t_data *data, char **argv, int toggle)
+void	redirection(t_data *data, int i)
 {
-	if (!data->cmd || !data->cmd_options || !data->cmd_paths)
+	if (i == 0)
 	{
-		if (toggle == 1)
-			minishell_perror_cmd(data, argv[data->index + 2], 2);
-		else
-			minishell_perror_cmd(data, argv[data->index + 2], 3);
+		open_in(data, data->infile);
+		safe_dup(data->fdin, STDIN_FILENO);
+		safe_close(data->fdin);
 	}
-	safe_exe(data->cmd, data->cmd_options, data->cmd_paths);
+	if (i == data->nbcmd - 1)
+	{
+		open_out(data, data->outfile);
+		safe_dup(data->fdout, STDOUT_FILENO);
+		safe_close(data->fdout);
+	}
+	if (i != 0)
+	{
+		safe_dup(data->prev_pipe, STDIN_FILENO);
+		safe_close(data->prev_pipe);
+	}
+	if (i != data->nbcmd - 1)
+		safe_dup(data->pipefd[1], STDOUT_FILENO);
+	close_all_sides(data);
 }
 
-void	first_n_mid_childs(t_data *data, char **argv)
+void	here_doc_redir(t_data *data, int i)
 {
-	(void)argv;
-	safe_piping(data->pipefd);
-	data->pid = fork();
-	data->wait++;
-	if (data->pid > 0)
-		dup_n_close(data, 0);
-	else
+	if (i == 1)
 	{
-		dup_n_close(data, 1);
-		if (!check_cmd(argv[data->index + 2]))
-		{
-			free_parent_split(data);
-			minishell_perror_cmd(data, argv[data->index + 2], 0);
-		}
-		data->cmd_options = ft_split(argv[data->index + 2], ' ');
-		data->cmd = cmd_final_state(data->cmd_paths, data->cmd_options[0]);
-		execmd(data, argv, 1);
-		free_child_split(data);
+		data->fdin = open("tmpfd.txt", O_RDWR);
+		safe_dup(data->fdin, STDIN_FILENO);
+		safe_close(data->fdin);
 	}
-}
-
-void	last_one(t_data *data, char **argv)
-{
-	if (!check_cmd(argv[data->index + 2]))
+	if (i == data->nbcmd)
 	{
-		free_parent_split(data);
-		minishell_perror_cmd(data, argv[data->index + 2], 4);
+		open_out(data, data->outfile);
+		safe_dup(data->fdout, STDOUT_FILENO);
+		safe_close(data->fdout);
 	}
-	data->cmd_options = ft_split(argv[data->index + 2], ' ');
-	data->cmd = cmd_final_state(data->cmd_paths, data->cmd_options[0]);
-	data->pid = fork();
-	if (data->pid)
-		waitpid(data->pid, &data->status, 0);
-	else
-		execmd(data, argv, 0);
-	free_child_split(data);
-}
-
-void	launcher(t_data *data, char **argv)
-{
-	if (!data->here_doc)
-		safe_dup(data->infile, STDIN_FILENO);
-	safe_dup(data->outfile, STDOUT_FILENO);
-	if (data->here_doc)
-		data->index++;
-	while (data->index < data->n_cmd - 1)
+	if (i != 1)
 	{
-		if (data->index == 0)
-			first_n_mid_childs(data, argv);
-		else
-			first_n_mid_childs(data, argv);
-		data->index++;
+		safe_dup(data->prev_pipe, STDIN_FILENO);
+		safe_close(data->prev_pipe);
 	}
-	last_one(data, argv);
+	if (i != data->nbcmd)
+		safe_dup(data->pipefd[1], STDOUT_FILENO);
+	close_all_sides(data);
 }
 
 int	main(int ac, char **av, char **env)
 {
 	t_data	data;
+	int		i;
 
-	ft_parse(ac, av);
-	check_void_arg(av);
-	struct_init(&data);
-	check_here_doc(&data, av);
-	if (!data.here_doc)
-		open_in(&data, av[1]);
-	open_out(&data, av[ac - 1]);
-	data.n_cmd = ac - 3;
-	data.paths = get_cmd_path(env);
-	if (data.paths == NULL)
-		kill_da_process("PATH not found\n");
-	data.cmd_paths = ft_split(data.paths, ':');
-	launcher(&data, av);
-	if (!data.here_doc)
-		safe_dup(data.infile, STDIN_FILENO);
-	safe_dup(data.outfile, STDOUT_FILENO);
-	waiting(data.wait);
-	safe_close(data.outfile);
-	if (!data.here_doc)
-		safe_close(data.infile);
-	free_parent_split(&data);
+	i = 0;
+	if (ac < 5)
+		return (1);
+	struct_init(&data, ac, av, env);
+	if (!ft_strncmp(av[1], "here_doc", 9))
+	{
+		data.here_doc = 1;
+		i++;
+		data.nbcmd--;
+		limiter_child(&data, av[2]);
+	}
+	data.pid = malloc(sizeof(int) * (data.nbcmd + data.here_doc));
+	while (i < data.nbcmd + data.here_doc)
+	{
+		safe_piping(data.pipefd);
+		data.pid[i] = fork();
+		if (data.pid[i] == 0)
+		{
+			free(data.pid);
+			if (!data.here_doc)
+				redirection(&data, i);
+			else
+				here_doc_redir(&data, i);
+			if (check_cmd(av[i + 2]))
+			{
+				data.cmd_options = ft_split(av[i + 2], ' ');
+				data.cmd = cmd_final_state(&data, data.cmd_options[0]);
+				if (data.cmd)
+					safe_exe(&data, env);
+				free_tab(data.cmd_options);
+				free_tab(data.path);
+				if (data.cmd)
+					free(data.cmd_options);
+			}
+			ft_putstr_fd(av[i + 2], STDERR_FILENO);
+			ft_putstr_fd(": command not found\n", STDERR_FILENO);
+			exit(127);
+		}
+		else if ((data.pid[i] > 0 && !data.here_doc)
+			|| (data.pid[i] > 1 && data.here_doc))
+		{
+			safe_close(data.pipefd[1]);	
+			if (data.prev_pipe != -1)
+				safe_close(data.prev_pipe);
+			data.prev_pipe = data.pipefd[0];
+		}
+		i++;
+	}
+	safe_close(data.pipefd[0]);
+	while (i < ac)
+	{
+		waitpid(-1, &data.status, 0);
+		i++;
+	}
+	if (data.here_doc)
+	{
+		waitpid(-1, &data.status, 0);
+		unlink("tmpfd.txt");
+	}
+	free(data.pid);
 	return (WEXITSTATUS(data.status));
 }
